@@ -22,33 +22,27 @@ public class FTPUploader {
     public FTPUploader(String host, String user, String pwd) throws Exception {
         System.setProperty("https.protocols", "TLSv1.2");
         System.setProperty("ftps.protocols", "TLSv1.2");
-        ftp = new FTPSClient("TLS", true);
+        ftp = new FTPSClient("TLS");
         int reply;
 
         ftp.connect(host);
-        System.out.println("Connected to ftp server");
-        System.out.println("1" + ftp.getReplyString());
-        System.out.println("2=" + Arrays.toString(ftp.getEnabledProtocols()));
-        System.out.println("3==" + ftp.getWantClientAuth());
-        System.out.println("4===" + ftp.getNeedClientAuth());
+        logger.debug("Connected to ftp server");
+        logger.debug(ftp.getReplyString());
+
         reply = ftp.getReplyCode();
         if (!FTPReply.isPositiveCompletion(reply)) {
             ftp.disconnect();
             throw new Exception("Exception in connecting to FTP Server");
         }
         ftp.login(user, pwd);
-        System.out.println("3==" + ftp.getWantClientAuth());
-        System.out.println("4===" + ftp.getNeedClientAuth());
+        logger.debug("Logged in to ftp server");
         ftp.setFileType(FTP.BINARY_FILE_TYPE);
         ftp.enterLocalPassiveMode();
     }
 
-    public void uploadFile(String localFileFullName, String fileName, String hostDir)
-            throws Exception {
+    public void uploadFile(String localFileFullName, String fileName, String hostDir) {
         try {
             InputStream input = new FileInputStream(new File(localFileFullName));
-
-            logger.info("=================================>" + System.getProperty("ftps.protocols"));
             this.ftp.storeFile(hostDir + fileName, input);
         } catch (IOException e) {
             logger.error("Exception : " + e.getMessage());
@@ -62,7 +56,6 @@ public class FTPUploader {
                 this.ftp.logout();
                 this.ftp.disconnect();
             } catch (IOException f) {
-                // do nothing as file is already saved to server
                 logger.error("Exception : " + f.getMessage());
             }
         }
@@ -80,7 +73,6 @@ public class FTPUploader {
                 String currentFileName = aFile.getName();
                 if (currentFileName.equals(".")
                         || currentFileName.equals("..")) {
-                    // skip parent directory and directory itself
                     continue;
                 }
                 for (int i = 0; i < level; i++) {
